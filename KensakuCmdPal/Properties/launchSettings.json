@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "KensakuCmdPal (Package)": {
+      "commandName": "MsixPackage",
+      "doNotLaunchApp": true
+    },
+    "KensakuCmdPal (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
