@@ -70,6 +70,8 @@
     <!-- When publishing trimmed, make sure to treat trimming warnings as build errors -->
     <ILLinkTreatWarningsAsErrors>true</ILLinkTreatWarningsAsErrors>
     <DefaultLanguage>en-us</DefaultLanguage>
+    <PackageCertificateThumbprint>BB0571417CC5C3ADCB6175B31BDDF839B0DB0921</PackageCertificateThumbprint>
+    <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
 
   </PropertyGroup>
 

@@ -20,7 +20,7 @@ public partial class KensakuCmdPalCommandsProvider : CommandProvider
             new CommandItem(new KensakuSearchPage())
             {
                 Title = DisplayName,
-                Subtitle = "Buscar archivos, contenido y capturas",
+                Subtitle = Loc.Get("ProviderSubtitle"),
             },
         ];
 

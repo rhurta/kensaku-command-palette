@@ -1,0 +1,39 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'   # must match the TargetFramework in the .csproj (e.g. 10.0.x for net10)
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Restore
+        run: msbuild KensakuCmdPal.sln /t:Restore /p:Configuration=Release /p:Platform=x64
+
+      - name: Build unsigned MSIX
+        run: >
+          msbuild KensakuCmdPal.sln
+          /p:Configuration=Release
+          /p:Platform=x64
+          /p:GenerateAppxPackageOnBuild=true
+          /p:AppxPackageSigningEnabled=false
+          /p:AppxBundle=Never
+          /p:UapAppxPackageBuildMode=SideLoadOnly
+          /p:AppxPackageDir="${{ github.workspace }}\AppPackages\"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kensaku-cmdpal-x64-unsigned
+          path: AppPackages/**
+          if-no-files-found: error
