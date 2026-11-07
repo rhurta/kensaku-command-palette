@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: windows-latest
@@ -14,13 +17,15 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'   # must match the TargetFramework in the .csproj (e.g. 10.0.x for net10)
+          dotnet-version: '10.0.x'   # the project targets net10.0-windows10.0.26100.0
 
       - uses: microsoft/setup-msbuild@v2
 
       - name: Restore
         run: msbuild KensakuCmdPal.sln /t:Restore /p:Configuration=Release /p:Platform=x64
 
+      # The .csproj hardcodes a local signing certificate thumbprint, so CI builds are unsigned.
+      # Package output goes to the default location: KensakuCmdPal/AppPackages/
       - name: Build unsigned MSIX
         run: >
           msbuild KensakuCmdPal.sln
@@ -30,10 +35,9 @@ jobs:
           /p:AppxPackageSigningEnabled=false
           /p:AppxBundle=Never
           /p:UapAppxPackageBuildMode=SideLoadOnly
-          /p:AppxPackageDir="${{ github.workspace }}\AppPackages\"
 
       - uses: actions/upload-artifact@v4
         with:
           name: kensaku-cmdpal-x64-unsigned
-          path: AppPackages/**
+          path: '**/AppPackages/**'
           if-no-files-found: error

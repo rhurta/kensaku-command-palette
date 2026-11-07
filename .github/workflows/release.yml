@@ -16,7 +16,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'   # must match the TargetFramework in the .csproj
+          dotnet-version: '10.0.x'   # the project targets net10.0-windows10.0.26100.0
 
       - uses: microsoft/setup-msbuild@v2
 
@@ -24,39 +24,45 @@ jobs:
         shell: pwsh
         run: |
           $v = "${{ github.ref_name }}".TrimStart('v') + ".0"
-          $manifest = "KensakuCmdPal/Package.appxmanifest"   # adjust the path if needed
+          $manifest = "KensakuCmdPal/Package.appxmanifest"
           (Get-Content $manifest -Raw) -replace '(<Identity[^>]*Version=")[^"]*(")', "`${1}$v`${2}" |
             Set-Content $manifest -NoNewline
 
-      - name: Restore signing certificate
+      # Import the certificate into the runner's store; the build then signs by thumbprint,
+      # overriding the thumbprint hardcoded in the .csproj.
+      - name: Import signing certificate
         shell: pwsh
         env:
           CERT_PFX_BASE64: ${{ secrets.CERT_PFX_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
         run: |
-          [IO.File]::WriteAllBytes("$env:RUNNER_TEMP\signing.pfx", [Convert]::FromBase64String($env:CERT_PFX_BASE64))
+          $pfx = Join-Path $env:RUNNER_TEMP "signing.pfx"
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:CERT_PFX_BASE64))
+          $pw = ConvertTo-SecureString $env:CERT_PASSWORD -AsPlainText -Force
+          $cert = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $pw
+          Remove-Item $pfx
+          "CERT_THUMBPRINT=$($cert.Thumbprint)" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
 
       - name: Restore
         run: msbuild KensakuCmdPal.sln /t:Restore /p:Configuration=Release /p:Platform=x64
 
       - name: Build signed MSIX
-        env:
-          CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
         run: >
           msbuild KensakuCmdPal.sln
           /p:Configuration=Release
           /p:Platform=x64
           /p:GenerateAppxPackageOnBuild=true
           /p:AppxPackageSigningEnabled=true
-          /p:PackageCertificateKeyFile="$env:RUNNER_TEMP\signing.pfx"
-          /p:PackageCertificatePassword="$env:CERT_PASSWORD"
+          /p:PackageCertificateThumbprint=$env:CERT_THUMBPRINT
           /p:AppxBundle=Never
           /p:UapAppxPackageBuildMode=SideLoadOnly
-          /p:AppxPackageDir="${{ github.workspace }}\AppPackages\"
 
       - name: Create GitHub release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $files = Get-ChildItem AppPackages -Recurse -Include *.msix, *.cer | ForEach-Object FullName
+          $files = @(Get-ChildItem . -Recurse -Filter *.msix | ForEach-Object FullName)
+          if ($files.Count -eq 0) { throw "No .msix produced" }
+          $files += (Resolve-Path kensaku.cer).Path   # public certificate, committed at the repo root
           gh release create "${{ github.ref_name }}" @files --title "${{ github.ref_name }}" --generate-notes
