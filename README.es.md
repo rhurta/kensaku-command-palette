@@ -2,6 +2,8 @@
 
 [English](README.md) · **Español**
 
+[![Build](https://github.com/rhurta/kensaku-command-palette/actions/workflows/build.yml/badge.svg)](https://github.com/rhurta/kensaku-command-palette/actions/workflows/build.yml) [![Release](https://img.shields.io/github/v/release/rhurta/kensaku-command-palette)](https://github.com/rhurta/kensaku-command-palette/releases/latest)
+
 Extensión de [PowerToys Command Palette](https://learn.microsoft.com/windows/powertoys/command-palette/) que usa [Kensaku](https://github.com/yjid/kensaku) como backend de búsqueda local: archivos, contenido de documentos y capturas (OCR), con el lenguaje de consultas de Kensaku.
 
 La idea es la misma que [EverythingCommandPalette](https://github.com/lin-ycv/EverythingCommandPalette), pero con Kensaku en lugar de Everything.
@@ -38,8 +40,32 @@ La extensión usa el idioma de visualización de Windows; si no hay traducción 
 - Windows 11.
 - [PowerToys](https://github.com/microsoft/PowerToys) con Command Palette instalado.
 - [Kensaku](https://github.com/yjid/kensaku) instalado, con el índice ya creado (abre la app al menos una vez) y `kensaku-cli` disponible.
-- Modo desarrollador de Windows activado (Configuración → Para programadores).
-- Visual Studio con las cargas de trabajo de WinUI y Windows App SDK (para compilar y desplegar).
+
+Para compilar desde el código fuente también necesitas:
+
+- Visual Studio con las cargas de trabajo de WinUI y Windows App SDK, y el SDK de .NET 10.
+- Modo desarrollador de Windows activado (Configuración → Para programadores), para desplegar desde Visual Studio.
+
+## Instalar
+
+Lo más fácil es instalar el paquete firmado desde la [última versión publicada](https://github.com/rhurta/kensaku-command-palette/releases/latest).
+
+1. Descarga los archivos `.msix` y `kensaku.cer` de la release.
+2. Confía en el certificado. El paquete está firmado con un certificado autofirmado (`CN=rhurta`), así que Windows debe confiar en él primero. En un PowerShell **con permisos de administrador**:
+
+   ```powershell
+   Import-Certificate -FilePath .\kensaku.cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople
+   ```
+
+3. Instala el paquete (doble clic en el `.msix`, o ejecuta):
+
+   ```powershell
+   Add-AppxPackage .\<archivo-descargado>.msix
+   ```
+
+4. Abre Command Palette, ejecuta `Reload` (la entrada cuyo subtítulo dice **Reload Command Palette Extension**) y busca **Kensaku**.
+
+Si antes desplegaste la extensión desde Visual Studio, quita esa copia primero (`Get-AppxPackage *Kensaku* | Remove-AppxPackage`) para evitar un conflicto de paquetes. Para desinstalar, usa el mismo comando.
 
 ## Compilar y desplegar
 
@@ -139,12 +165,45 @@ La extensión espera este JSON (es distinto del de `kensaku-cli search --json`):
 
 El servidor HTTP no entrega `filename`, `is_dir`, `group_count` ni `group_paths`; el nombre se calcula desde la ruta.
 
+## CI y releases
+
+Hay dos workflows de GitHub Actions en `.github/workflows/`:
+
+- **`build.yml`** se ejecuta en cada push a `main` y en cada pull request. Compila un MSIX x64 **sin firmar** en un runner de Windows y lo sube como artefacto. Un paquete sin firmar no se puede instalar; esta ejecución solo comprueba que el proyecto compila y se empaqueta.
+- **`release.yml`** se ejecuta al subir una etiqueta como `v0.2.0`. Toma la versión del paquete de la etiqueta (`v0.2.0` pasa a `0.2.0.0`), compila un MSIX **firmado** y crea una release en GitHub con el `.msix` y `kensaku.cer` adjuntos.
+
+**Publicar una release**
+
+```powershell
+git tag v0.2.0
+git push origin v0.2.0
+gh run watch
+```
+
+**Configuración de la firma (una sola vez)**
+
+- El workflow necesita dos secretos del repositorio: `CERT_PFX_BASE64` (el `.pfx` codificado en Base64) y `CERT_PASSWORD` (su contraseña). Créalos con `gh secret set`.
+- El sujeto del certificado debe coincidir con `Publisher` en `KensakuCmdPal/Package.appxmanifest` (ahora `CN=rhurta`), o Windows no instalará el paquete.
+- El certificado público `kensaku.cer` está en la raíz del repo y se adjunta a cada release. La clave privada (`.pfx`) nunca debe subirse al repositorio.
+- Los certificados autofirmados sirven para instalación manual desde GitHub. La distribución por Microsoft Store usa otra identidad y es la Store la que firma el paquete; las notas de `.github/skills/publish-extension/` de la plantilla describen las rutas de Store y WinGet.
+
+**Verificar una release**
+
+```powershell
+gh release download v0.2.0 --dir .\rel
+Get-AuthenticodeSignature (Get-ChildItem .\rel -Filter *.msix).FullName | Format-List SignerCertificate
+```
+
+El thumbprint del firmante debe coincidir con el que muestra `(Get-PfxCertificate .\kensaku.cer).Thumbprint`.
+
 ## Estructura
 
-- `KensakuClient.cs`: cliente HTTP, ciclo de vida del proceso `kensaku-cli serve`, lectura del token y deserialización (con source generation, compatible con AOT).
-- `KensakuSearchPage.cs`: página de búsqueda dinámica (`DynamicListPage`) y comando "Mostrar en carpeta".
-- `Loc.cs`: ayudante de localización sobre recursos `.resx`.
-- `Strings/Strings.resx`: textos en inglés (idioma por defecto). `Strings/Strings.<cultura>.resx`: traducciones (hoy `es`).
+- `KensakuCmdPal/Pages/KensakuClient.cs`: cliente HTTP, ciclo de vida del proceso `kensaku-cli serve`, lectura del token y deserialización (con source generation, compatible con AOT).
+- `KensakuCmdPal/Pages/KensakuSearchPage.cs`: página de búsqueda dinámica (`DynamicListPage`) y comando "Mostrar en carpeta".
+- `KensakuCmdPal/Pages/Loc.cs`: ayudante de localización sobre recursos `.resx`.
+- `KensakuCmdPal/Strings/Strings.resx`: textos en inglés (idioma por defecto). `Strings.<cultura>.resx` junto a él: traducciones (hoy `es`).
+- `KensakuCmdPal/Assets/`: icono de la extensión (una lupa) y los recursos de logo del MSIX.
+- `.github/workflows/`: workflows de CI y de releases.
 - El resto (manifiesto `Package.appxmanifest`, `Program.cs`, provider de comandos) viene de la plantilla de Command Palette.
 
 ## Cómo se creó este proyecto
