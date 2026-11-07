@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace KensakuCmdPal;
 
-// Forma real de GET /search (distinta de "kensaku-cli search --json"):
+// Actual shape of GET /search (different from "kensaku-cli search --json"):
 // { as_of, mode, results:[{match_type,modified,path,score,size,snippet}], returned, total }
 internal sealed record SearchResponse(List<Hit> Results, int Total, int Returned);
 
@@ -25,12 +25,12 @@ internal sealed record Hit(
         get
         {
             var name = System.IO.Path.GetFileName(Path.TrimEnd('\\', '/'));
-            return string.IsNullOrEmpty(name) ? Path : name; // carpetas/raíces
+            return string.IsNullOrEmpty(name) ? Path : name; // folders / drive roots
         }
     }
 }
 
-// Source generation: funciona también si el proyecto se publica con AOT/trimming.
+// Source generation: also works if the project is published with AOT/trimming.
 [JsonSourceGenerationOptions(
     PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower,
     PropertyNameCaseInsensitive = true)]
@@ -38,14 +38,14 @@ internal sealed record Hit(
 internal sealed partial class KensakuJson : JsonSerializerContext { }
 
 /// <summary>
-/// Habla con "kensaku-cli serve" por HTTP (loopback + bearer token).
-/// Si no hay servidor en el puerto, lo lanza oculto y lo mantiene vivo.
+/// Talks to "kensaku-cli serve" over HTTP (loopback + bearer token).
+/// If nothing is listening on the port, it launches the server hidden and keeps it alive.
 /// </summary>
 internal sealed class KensakuClient : IDisposable
 {
     public static KensakuClient Instance { get; } = new();
 
-    // Ajusta aquí o léelo desde ajustes de la extensión.
+    // Adjust here or read from the extension settings.
     private readonly string _cliPath =
         Environment.GetEnvironmentVariable("KENSAKU_CLI") ?? "kensaku-cli";
     private readonly int _port = 8765;
@@ -56,7 +56,7 @@ internal sealed class KensakuClient : IDisposable
 
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(10) };
     private readonly SemaphoreSlim _startLock = new(1, 1);
-    private Process? _proc; // solo si lo lanzamos nosotros
+    private Process? _proc; // only set if we launched the server ourselves
 
     private Uri Url(string pathAndQuery) =>
         new($"http://127.0.0.1:{_port}{pathAndQuery}");
@@ -73,7 +73,7 @@ internal sealed class KensakuClient : IDisposable
 
             using var res = await _http.SendAsync(req, ct);
             if (res.StatusCode == HttpStatusCode.Unauthorized && attempt == 0)
-                continue; // el token pudo rotar: se relee y se reintenta una vez
+                continue; // the token may have rotated: re-read it and retry once
 
             res.EnsureSuccessStatusCode();
             await using var stream = await res.Content.ReadAsStreamAsync(ct);
@@ -82,7 +82,7 @@ internal sealed class KensakuClient : IDisposable
                    ?? new SearchResponse([], 0, 0);
         }
 
-        throw new InvalidOperationException("Kensaku rechazó el token (401).");
+        throw new InvalidOperationException(Loc.Get("ErrUnauthorized"));
     }
 
     private string ReadToken() => File.ReadAllText(_tokenPath).Trim();
@@ -124,24 +124,23 @@ internal sealed class KensakuClient : IDisposable
             psi.ArgumentList.Add(_port.ToString());
 
             _proc = Process.Start(psi)
-                    ?? throw new InvalidOperationException("No se pudo lanzar kensaku-cli.");
-            // Hay que consumir la salida o el proceso puede bloquearse al llenarse el búfer.
+                    ?? throw new InvalidOperationException(Loc.Get("ErrLaunch"));
+            // The output must be consumed or the process can block when the buffer fills up.
             _proc.OutputDataReceived += (_, _) => { };
             _proc.ErrorDataReceived += (_, _) => { };
             _proc.BeginOutputReadLine();
             _proc.BeginErrorReadLine();
 
-            for (var i = 0; i < 50; i++) // hasta ~10 s
+            for (var i = 0; i < 50; i++) // up to ~10 s
             {
                 if (_proc.HasExited)
                     throw new InvalidOperationException(
-                        $"kensaku-cli serve terminó con código {_proc.ExitCode} " +
-                        "(código 3 = no hay índice: abre Kensaku una vez).");
+                        Loc.Format("ErrServeExited", _proc.ExitCode));
                 if (await HealthAsync(ct)) return;
                 await Task.Delay(200, ct);
             }
 
-            throw new TimeoutException("kensaku-cli serve no respondió en /health.");
+            throw new TimeoutException(Loc.Get("ErrHealthTimeout"));
         }
         finally
         {

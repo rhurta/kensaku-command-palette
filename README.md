@@ -1,84 +1,106 @@
-# Kensaku para PowerToys Command Palette
+# Kensaku for PowerToys Command Palette
 
-Extensión de [PowerToys Command Palette](https://learn.microsoft.com/windows/powertoys/command-palette/) que usa [Kensaku](https://github.com/yjid/kensaku) como backend de búsqueda local: archivos, contenido de documentos y capturas (OCR), con el lenguaje de consultas de Kensaku.
+**English** · [Español](README.es.md)
 
-La idea es la misma que [EverythingCommandPalette](https://github.com/lin-ycv/EverythingCommandPalette), pero con Kensaku en lugar de Everything.
+A [PowerToys Command Palette](https://learn.microsoft.com/windows/powertoys/command-palette/) extension that uses [Kensaku](https://github.com/yjid/kensaku) as a local search backend: files, document contents and screenshots (OCR), with Kensaku's query language.
 
-## Cómo funciona
+The idea is the same as [EverythingCommandPalette](https://github.com/lin-ycv/EverythingCommandPalette), but powered by Kensaku instead of Everything.
 
-- La extensión habla con `kensaku-cli serve` por HTTP (solo loopback, `127.0.0.1`, con token Bearer).
-- Si no hay un servidor escuchando en el puerto (por defecto `8765`), la extensión lanza `kensaku-cli serve` oculto y lo mantiene vivo mientras corre. Si ya tienes uno corriendo, lo reutiliza.
-- Se usa el servidor HTTP y no `kensaku-cli search` por consulta, porque cada invocación del CLI tiene que arrancar el proceso y abrir el índice (con un índice grande, del orden de 1,6 s), mientras que el servidor residente responde en una fracción de ese tiempo.
-- La búsqueda se lanza con un debounce de 300 ms y se cancela si llega una consulta más nueva.
-- El token se lee de `%APPDATA%\kensaku\http.token`.
+## How it works
 
-## Requisitos
+- The extension talks to `kensaku-cli serve` over HTTP (loopback only, `127.0.0.1`, Bearer token).
+- If nothing is listening on the port (default `8765`), the extension launches `kensaku-cli serve` hidden and keeps it alive while it runs. If you already have one running, it reuses it.
+- It uses the HTTP server instead of calling `kensaku-cli search` per query because every CLI invocation has to start a process and open the index (about 1.6 s with a large index), whereas the resident server answers in a fraction of that.
+- Searches are debounced (300 ms) and cancelled when a newer query arrives.
+- The token is read from `%APPDATA%\kensaku\http.token`.
+
+## Requirements
 
 - Windows 11.
-- [PowerToys](https://github.com/microsoft/PowerToys) con Command Palette instalado.
-- [Kensaku](https://github.com/yjid/kensaku) instalado, con el índice ya creado (abre la app al menos una vez) y `kensaku-cli` disponible.
-- Modo desarrollador de Windows activado (Configuración → Para programadores).
-- Visual Studio con las cargas de trabajo de WinUI y Windows App SDK (para compilar y desplegar).
+- [PowerToys](https://github.com/microsoft/PowerToys) with Command Palette installed.
+- [Kensaku](https://github.com/yjid/kensaku) installed, with its index already built (open the app at least once) and `kensaku-cli` available.
+- Windows Developer Mode enabled (Settings → For developers).
+- Visual Studio with the WinUI and Windows App SDK workloads (to build and deploy).
 
-## Compilar y desplegar
+## Build and deploy
 
-1. Abre la solución (`.sln`) en Visual Studio.
-2. Selecciona la configuración **Debug** y la plataforma **x64** (o ARM64 según tu equipo).
-3. Menú **Build → Deploy KensakuCmdPal**.
+1. Open the solution (`.sln`) in Visual Studio.
+2. Select the **Debug** configuration and the **x64** platform (or ARM64 depending on your machine).
+3. Menu **Build → Deploy KensakuCmdPal**.
 
-> **Importante:** hay que usar *Deploy*, no solo *Build*. Compilar no actualiza el paquete instalado. Tampoco sirve ejecutar la variante "(Unpackaged)" desde Visual Studio, porque no despliega el paquete.
+> **Important:** you must use *Deploy*, not just *Build*. Building alone does not update the installed package. Running the "(Unpackaged)" variant from Visual Studio doesn't work either, because it doesn't deploy the package.
 
-Cada vez que cambies el código, vuelve a compilar y desplegar.
+Rebuild and redeploy every time you change the code.
 
-## Recargar en Command Palette
+## Reload in Command Palette
 
-Command Palette no detecta los paquetes que se vuelven a desplegar desde Visual Studio, así que tras cada despliegue hay que recargar manualmente:
+Command Palette does not detect packages redeployed from Visual Studio, so you must reload it manually after each deployment:
 
-1. Abre Command Palette (`Alt+Space` por defecto).
-2. Ejecuta `Reload` y elige la opción cuyo subtítulo dice **Reload Command Palette Extension** (hay varias opciones de Reload; no elijas otra).
-3. Busca **Kensaku** en la lista de comandos y entra.
+1. Open Command Palette (`Alt+Space` by default).
+2. Run `Reload` and pick the entry whose subtitle says **Reload Command Palette Extension** (there are several Reload entries; don't pick another one).
+3. Find **Kensaku** in the command list and open it.
 
-## Uso
+## Usage
 
-Escribe en la caja de búsqueda; los resultados se actualizan mientras escribes. Se admite el lenguaje de consultas de Kensaku, por ejemplo:
+Type in the search box; results update as you type. Kensaku's query language is supported, for example:
 
 ```
 2026 forecast
-type:pdf contrato
-modified:<7d informe
+type:pdf contract
+modified:<7d report
 ```
 
-Para cada resultado:
+For each result:
 
-- **Enter:** abre el archivo o carpeta.
-- **Menú de acciones:** mostrar en carpeta y copiar la ruta.
-- **Panel de detalles:** ruta completa, fecha de modificación, tamaño y, cuando el servidor lo entrega, el fragmento que coincidió.
-- **Etiqueta:** tipo de coincidencia (`Name`, `Content`, `Both`…).
+- **Enter:** open the file or folder.
+- **Actions menu:** show in folder and copy the path.
+- **Details pane:** full path, modification date, size and, when the server provides it, the matching snippet.
+- **Tag:** match type (name, content, or both).
 
-La primera búsqueda tarda más, porque se carga el índice (y se arranca el servidor si no estaba corriendo). Las siguientes son más rápidas.
+The first search is slower because the index is loaded (and the server is started if it wasn't running). Later searches are faster.
 
-## Configuración
+## Languages (i18n)
 
-Por ahora la configuración está en el código y en variables de entorno:
+The default UI language is **English**. All user-visible text lives in `.resx` resource files:
 
-| Qué | Dónde | Por defecto |
+- `Strings/Strings.resx`: English (neutral / fallback language).
+- `Strings/Strings.es.resx`: Spanish.
+
+The extension follows the Windows display language; if there is no translation for it, English is used. Dates and numbers follow the user's regional format.
+
+**Adding a language:**
+
+1. Copy `Strings/Strings.resx` to `Strings/Strings.<culture>.resx` (for example `Strings.fr.resx` or `Strings.pt-BR.resx`) and translate only the `<value>` elements; don't change the `name` attributes.
+2. In `Package.appxmanifest`, inside `<Resources>`, declare the language: `<Resource Language="fr"/>`. If the template ships with `x-generate`, replace it with the explicit list (`en-US`, `es`, `fr`…). Windows uses this list to decide which language the packaged process runs in; if it's missing, the extension may show English even though the translation exists.
+3. Redeploy and reload Command Palette.
+
+**Testing a language without changing Windows:** set the user environment variable `KENSAKU_LANG` (for example `es`), then sign out and back in (or restart PowerToys).
+
+**Adding new text:** add the key to `Strings.resx` (English) and to each translation, then use it with `Loc.Get("Key")` or `Loc.Format("Key", args)`. If a key is missing from a translation, the English text is used; if it's missing everywhere, the key name is shown.
+
+## Configuration
+
+For now, configuration lives in code and environment variables:
+
+| What | Where | Default |
 |---|---|---|
-| Ruta de `kensaku-cli` | Variable de usuario `KENSAKU_CLI` | `kensaku-cli` (debe estar en el PATH) |
-| Puerto del servidor | `KensakuClient.cs` (`_port`) | `8765` |
-| Cantidad de resultados | `KensakuSearchPage.cs` (`Limit`) | `30` |
+| Path to `kensaku-cli` | `KENSAKU_CLI` user variable | `kensaku-cli` (must be on the PATH) |
+| UI language | `KENSAKU_LANG` user variable (for testing only, e.g. `es`) | Windows display language |
+| Server port | `KensakuClient.cs` (`_port`) | `8765` |
+| Number of results | `KensakuSearchPage.cs` (`Limit`) | `30` |
 | Debounce | `KensakuSearchPage.cs` (`DebounceMs`) | `300` ms |
 
-Si defines o cambias `KENSAKU_CLI`, cierra sesión y vuelve a entrar (o reinicia PowerToys) para que el proceso de la extensión la vea.
+If you set or change `KENSAKU_CLI`, sign out and back in (or restart PowerToys) so the extension process picks it up.
 
-## Solución de problemas
+## Troubleshooting
 
-- **La extensión no aparece:** confirma que desplegaste (no solo compilaste), que el modo desarrollador está activo y repite el Reload.
-- **Aparece el item "No se pudo consultar Kensaku":** el subtítulo trae el motivo.
-  - Si no encuentra `kensaku-cli`: el proceso empaquetado a veces no ve el mismo PATH que tu terminal. Obtén la ruta con `where.exe kensaku-cli` y defínela en `KENSAKU_CLI`.
-  - Si `kensaku-cli serve` termina con código 3: no hay índice. Abre la app Kensaku una vez para crearlo.
-  - Si hay un 401 persistente: el token de `%APPDATA%\kensaku\http.token` no coincide con el del servidor que está corriendo. Cierra ese servidor y deja que la extensión lo lance de nuevo.
-- **Depurar:** con el proyecto en Debug, inicia con F5 y abre la ventana Output (`Ctrl+Alt+O`) para ver los mensajes de depuración.
-- **Probar el servidor a mano** (PowerShell; reemplaza `<TOKEN>` con el contenido de `http.token`):
+- **The extension doesn't show up:** make sure you deployed (not just built), Developer Mode is on, and repeat the Reload.
+- **A "Could not query Kensaku" item appears:** its subtitle contains the reason.
+  - If it can't find `kensaku-cli`: the packaged process sometimes doesn't see the same PATH as your terminal. Get the path with `where.exe kensaku-cli` and set it in `KENSAKU_CLI`.
+  - If `kensaku-cli serve` exits with code 3: there is no index. Open the Kensaku app once to build it.
+  - If you get a persistent 401: the token in `%APPDATA%\kensaku\http.token` doesn't match the running server's. Stop that server and let the extension launch a new one.
+- **Debugging:** with the project in Debug, start with F5 and open the Output window (`Ctrl+Alt+O`) to see debug messages.
+- **Testing the server by hand** (PowerShell; replace `<TOKEN>` with the contents of `http.token`):
 
   ```powershell
   kensaku-cli serve --port 8765
@@ -90,11 +112,11 @@ Si defines o cambias `KENSAKU_CLI`, cierra sesión y vuelve a entrar (o reinicia
   Invoke-RestMethod "http://127.0.0.1:8765/search?q=2026%20Forecast&limit=3" -Headers $h
   ```
 
-  Nota: en PowerShell 5.1, `Invoke-RestMethod` puede mostrar mal las tildes (`ImputaciÃ³n`) si la respuesta no declara `charset`. La extensión lee los bytes como UTF-8 y no se ve afectada.
+  Note: in PowerShell 5.1, `Invoke-RestMethod` may display accents incorrectly (`ImputaciÃ³n`) if the response doesn't declare a `charset`. The extension reads the bytes as UTF-8 and isn't affected.
 
-## Formato de la respuesta de `/search`
+## `/search` response format
 
-La extensión espera este JSON (es distinto del de `kensaku-cli search --json`):
+The extension expects this JSON (it differs from `kensaku-cli search --json`):
 
 ```json
 {
@@ -104,7 +126,7 @@ La extensión espera este JSON (es distinto del de `kensaku-cli search --json`):
     {
       "match_type": "Both",
       "modified": 1771507347,
-      "path": "C:\\Users\\...\\archivo.pptx",
+      "path": "C:\\Users\\...\\file.pptx",
       "score": 0.94,
       "size": 13631379,
       "snippet": null
@@ -115,32 +137,34 @@ La extensión espera este JSON (es distinto del de `kensaku-cli search --json`):
 }
 ```
 
-El servidor HTTP no entrega `filename`, `is_dir`, `group_count` ni `group_paths`; el nombre se calcula desde la ruta.
+The HTTP server doesn't return `filename`, `is_dir`, `group_count` or `group_paths`; the file name is derived from the path.
 
-## Estructura
+## Project layout
 
-- `KensakuClient.cs`: cliente HTTP, ciclo de vida del proceso `kensaku-cli serve`, lectura del token y deserialización (con source generation, compatible con AOT).
-- `KensakuSearchPage.cs`: página de búsqueda dinámica (`DynamicListPage`) y comando "Mostrar en carpeta".
-- El resto (manifiesto `Package.appxmanifest`, `Program.cs`, provider de comandos) viene de la plantilla de Command Palette.
+- `KensakuClient.cs`: HTTP client, `kensaku-cli serve` process lifecycle, token handling and deserialization (source-generated, AOT-friendly).
+- `KensakuSearchPage.cs`: dynamic search page (`DynamicListPage`) and the "Show in folder" command.
+- `Loc.cs`: localization helper on top of `.resx` resources.
+- `Strings/Strings.resx`: English texts (default language). `Strings/Strings.<culture>.resx`: translations (currently `es`).
+- Everything else (`Package.appxmanifest`, `Program.cs`, the command provider) comes from the Command Palette template.
 
-## Cómo se creó este proyecto
+## How this project was created
 
-1. Se generó el esqueleto con el comando **Create a new extension** de Command Palette (ExtensionName `KensakuCmdPal`, display name `Kensaku`) y se abrió el `.sln` en Visual Studio.
-2. Se agregaron `KensakuClient.cs` y `KensakuSearchPage.cs` al proyecto (Add → Existing Item), ajustando el `namespace` si hacía falta.
-3. En el provider de comandos se reemplazó la página de ejemplo por la nuestra:
+1. The skeleton was generated with the **Create a new extension** command in Command Palette (ExtensionName `KensakuCmdPal`, display name `Kensaku`) and the `.sln` was opened in Visual Studio.
+2. `KensakuClient.cs`, `KensakuSearchPage.cs`, `Loc.cs` and the `Strings/` folder were added to the project (Add → Existing Item), adjusting the `namespace` if needed.
+3. In the command provider, the template's sample page was replaced with ours:
 
    ```csharp
    _commands = [
        new CommandItem(new KensakuSearchPage())
        {
            Title = "Kensaku",
-           Subtitle = "Buscar archivos, contenido y capturas",
+           Subtitle = Loc.Get("ProviderSubtitle"),
        },
    ];
    ```
 
-4. Se compiló y desplegó con **Build → Deploy**, y se recargó Command Palette.
+4. It was built and deployed with **Build → Deploy**, and Command Palette was reloaded.
 
-## Licencia
+## License
 
-Por definir. Si copias código de otros proyectos (por ejemplo de EverythingCommandPalette, que es EPL-2.0), revisa sus condiciones. Kensaku es MIT.
+To be decided. If you copy code from other projects (for example EverythingCommandPalette, which is EPL-2.0), check their terms. Kensaku is MIT.

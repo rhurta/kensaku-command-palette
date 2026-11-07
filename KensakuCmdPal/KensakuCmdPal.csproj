@@ -69,6 +69,7 @@
 
     <!-- When publishing trimmed, make sure to treat trimming warnings as build errors -->
     <ILLinkTreatWarningsAsErrors>true</ILLinkTreatWarningsAsErrors>
+    <DefaultLanguage>en-us</DefaultLanguage>
 
   </PropertyGroup>
 

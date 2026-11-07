@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -12,7 +13,7 @@ namespace KensakuCmdPal;
 internal sealed partial class KensakuSearchPage : DynamicListPage
 {
     private const int Limit = 30;
-    private const int DebounceMs = 300; // la búsqueda tarda ~190 ms en caliente
+    private const int DebounceMs = 300; // a warm search takes ~190 ms
 
     private CancellationTokenSource? _cts;
     private IListItem[] _items = [];
@@ -20,10 +21,10 @@ internal sealed partial class KensakuSearchPage : DynamicListPage
     public KensakuSearchPage()
     {
         Title = "Kensaku";
-        Name = "Buscar";
-        PlaceholderText = "Archivos, contenido, capturas…  (type:pdf, modified:<7d, in:…)";
+        Name = Loc.Get("PageName");
+        PlaceholderText = Loc.Get("PagePlaceholder");
         ShowDetails = true;
-        //Icon = new IconInfo("...");
+        Icon = IconHelpers.FromRelativePath("Assets\\Kensaku.png");
     }
 
     public override IListItem[] GetItems() => _items;
@@ -57,7 +58,7 @@ internal sealed partial class KensakuSearchPage : DynamicListPage
         }
         catch (OperationCanceledException)
         {
-            return; // llegó una búsqueda más nueva
+            return; // a newer search superseded this one
         }
         catch (Exception ex)
         {
@@ -65,7 +66,7 @@ internal sealed partial class KensakuSearchPage : DynamicListPage
             [
                 new ListItem(new NoOpCommand())
                 {
-                    Title = "No se pudo consultar Kensaku",
+                    Title = Loc.Get("ErrorTitle"),
                     Subtitle = ex.Message,
                 },
             ];
@@ -78,22 +79,24 @@ internal sealed partial class KensakuSearchPage : DynamicListPage
 
     private static IListItem ToItem(Hit h)
     {
+        // "g" uses the user's regional format (CurrentCulture), so dates localize automatically.
         var when = DateTimeOffset.FromUnixTimeSeconds(h.Modified).LocalDateTime;
         var dir = Path.GetDirectoryName(h.Path) ?? h.Path;
 
         var body = $"{(string.IsNullOrWhiteSpace(h.Snippet) ? "" : h.Snippet + "\n\n")}" +
                    $"{h.Path}\n{when:g}  ·  {FormatSize(h.Size)}";
 
-        var more = new System.Collections.Generic.List<IContextItem>
+        var more = new List<IContextItem>
         {
             new CommandContextItem(new ShowInFolderCommand(h.Path)),
-            new CommandContextItem(new CopyTextCommand(h.Path) { Name = "Copiar ruta" }),
+            new CommandContextItem(new CopyTextCommand(h.Path) { Name = Loc.Get("CopyPath") }),
         };
+
         return new ListItem(new OpenUrlCommand(h.Path))
         {
             Title = h.Filename,
             Subtitle = dir,
-            Tags = [new Tag(h.MatchType)],
+            Tags = [new Tag(Loc.MatchType(h.MatchType))],
             Details = new Details { Title = h.Filename, Body = body },
             MoreCommands = more.ToArray(),
         };
@@ -115,7 +118,7 @@ internal sealed partial class ShowInFolderCommand : InvokableCommand
     public ShowInFolderCommand(string path)
     {
         _path = path;
-        Name = "Mostrar en carpeta";
+        Name = Loc.Get("ShowInFolder");
     }
 
     public override ICommandResult Invoke()

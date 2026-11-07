@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="ProviderSubtitle" xml:space="preserve"><value>Search files, content and screenshots</value></data>
+  <data name="PageName" xml:space="preserve"><value>Search</value></data>
+  <data name="PagePlaceholder" xml:space="preserve"><value>Files, content, screenshots…  (type:pdf, modified:&lt;7d, in:…)</value></data>
+  <data name="ErrorTitle" xml:space="preserve"><value>Could not query Kensaku</value></data>
+  <data name="ShowInFolder" xml:space="preserve"><value>Show in folder</value></data>
+  <data name="CopyPath" xml:space="preserve"><value>Copy path</value></data>
+  <data name="MatchType_Name" xml:space="preserve"><value>Name</value></data>
+  <data name="MatchType_Content" xml:space="preserve"><value>Content</value></data>
+  <data name="MatchType_Both" xml:space="preserve"><value>Name + content</value></data>
+  <data name="ErrLaunch" xml:space="preserve"><value>Could not launch kensaku-cli.</value></data>
+  <data name="ErrServeExited" xml:space="preserve"><value>kensaku-cli serve exited with code {0} (code 3 = no index found: open Kensaku once to build it).</value></data>
+  <data name="ErrHealthTimeout" xml:space="preserve"><value>kensaku-cli serve did not respond on /health.</value></data>
+  <data name="ErrUnauthorized" xml:space="preserve"><value>Kensaku rejected the token (401).</value></data>
+</root>
