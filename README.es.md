@@ -2,7 +2,7 @@
 
 [English](README.md) · **Español**
 
-[![Build](https://github.com/rhurta/kensaku-command-palette/actions/workflows/build.yml/badge.svg)](https://github.com/rhurta/kensaku-command-palette/actions/workflows/build.yml) [![Release](https://img.shields.io/github/v/release/rhurta/kensaku-command-palette)](https://github.com/rhurta/kensaku-command-palette/releases/latest)
+[![Build](https://github.com/rhurta/kensaku-command-palette/actions/workflows/build.yml/badge.svg)](https://github.com/rhurta/kensaku-command-palette/actions/workflows/build.yml) [![Release](https://img.shields.io/github/v/release/rhurta/kensaku-command-palette)](https://github.com/rhurta/kensaku-command-palette/releases/latest) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Extensión de [PowerToys Command Palette](https://learn.microsoft.com/windows/powertoys/command-palette/) que usa [Kensaku](https://github.com/yjid/kensaku) como backend de búsqueda local: archivos, contenido de documentos y capturas (OCR), con el lenguaje de consultas de Kensaku.
 
@@ -206,6 +206,7 @@ El thumbprint del firmante debe coincidir con el que muestra `(Get-PfxCertificat
 - `KensakuCmdPal/Strings/Strings.resx`: textos en inglés (idioma por defecto). `Strings.<cultura>.resx` junto a él: traducciones (hoy `es`).
 - `KensakuCmdPal/Assets/`: icono de la extensión (una lupa) y los recursos de logo del MSIX.
 - `.github/workflows/`: workflows de CI y de releases.
+- `LICENSE`: texto de la licencia MIT.
 - El resto (manifiesto `Package.appxmanifest`, `Program.cs`, provider de comandos) viene de la plantilla de Command Palette.
 
 ## Cómo se creó este proyecto
@@ -228,4 +229,9 @@ El thumbprint del firmante debe coincidir con el que muestra `(Get-PfxCertificat
 
 ## Licencia
 
-Por definir. Si copias código de otros proyectos (por ejemplo de EverythingCommandPalette, que es EPL-2.0), revisa sus condiciones. Kensaku es MIT.
+MIT: consulta [LICENSE](LICENSE).
+
+- Los archivos generados a partir de la plantilla de extensiones de Command Palette (`Program.cs`, `KensakuCmdPal.cs`, `KensakuCmdPalCommandsProvider.cs`, `Helpers/SettingsManager.cs`) conservan sus cabeceras originales `Copyright (c) Microsoft Corporation` bajo MIT; a ellos también se aplican estos mismos términos MIT.
+- [Kensaku](https://github.com/yjid/kensaku) es un proyecto independiente con licencia MIT. Esta extensión solo se comunica con su servidor HTTP local; aquí no se incluye código de Kensaku.
+- [EverythingCommandPalette](https://github.com/lin-ycv/EverythingCommandPalette) (EPL-2.0) fue solo una inspiración: no se copió código de ese proyecto.
+- Las dependencias NuGet y las herramientas del SDK de Windows/MSIX se distribuyen bajo sus propias licencias.

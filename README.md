@@ -2,7 +2,7 @@
 
 **English** · [Español](README.es.md)
 
-[![Build](https://github.com/rhurta/kensaku-command-palette/actions/workflows/build.yml/badge.svg)](https://github.com/rhurta/kensaku-command-palette/actions/workflows/build.yml) [![Release](https://img.shields.io/github/v/release/rhurta/kensaku-command-palette)](https://github.com/rhurta/kensaku-command-palette/releases/latest)
+[![Build](https://github.com/rhurta/kensaku-command-palette/actions/workflows/build.yml/badge.svg)](https://github.com/rhurta/kensaku-command-palette/actions/workflows/build.yml) [![Release](https://img.shields.io/github/v/release/rhurta/kensaku-command-palette)](https://github.com/rhurta/kensaku-command-palette/releases/latest) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A [PowerToys Command Palette](https://learn.microsoft.com/windows/powertoys/command-palette/) extension that uses [Kensaku](https://github.com/yjid/kensaku) as a local search backend: files, document contents and screenshots (OCR), with Kensaku's query language.
 
@@ -206,6 +206,7 @@ The signer's thumbprint should match the one printed by `(Get-PfxCertificate .\k
 - `KensakuCmdPal/Strings/Strings.resx`: English texts (default language). `Strings.<culture>.resx` next to it: translations (currently `es`).
 - `KensakuCmdPal/Assets/`: extension icon (a magnifying glass) and the MSIX logo assets.
 - `.github/workflows/`: CI and release workflows.
+- `LICENSE`: MIT license text.
 - Everything else (`Package.appxmanifest`, `Program.cs`, the command provider) comes from the Command Palette template.
 
 ## How this project was created
@@ -228,4 +229,9 @@ The signer's thumbprint should match the one printed by `(Get-PfxCertificate .\k
 
 ## License
 
-To be decided. If you copy code from other projects (for example EverythingCommandPalette, which is EPL-2.0), check their terms. Kensaku is MIT.
+MIT — see [LICENSE](LICENSE).
+
+- Files generated from the Command Palette extension template (`Program.cs`, `KensakuCmdPal.cs`, `KensakuCmdPalCommandsProvider.cs`, `Helpers/SettingsManager.cs`) keep their original `Copyright (c) Microsoft Corporation` MIT headers; the same MIT terms apply to them.
+- [Kensaku](https://github.com/yjid/kensaku) is a separate MIT-licensed project. This extension only talks to its local HTTP server; no Kensaku source is vendored here.
+- [EverythingCommandPalette](https://github.com/lin-ycv/EverythingCommandPalette) (EPL-2.0) was an inspiration only — no code was copied from it.
+- NuGet dependencies and the Windows/MSIX SDK tooling are distributed under their own licenses.
