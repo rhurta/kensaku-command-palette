@@ -8,25 +8,6 @@ Extensión de [PowerToys Command Palette](https://learn.microsoft.com/windows/po
 
 La idea es la misma que [EverythingCommandPalette](https://github.com/lin-ycv/EverythingCommandPalette), pero con Kensaku en lugar de Everything.
 
-## Idiomas (i18n)
-
-El idioma por defecto de la interfaz es **inglés**. Los textos viven en archivos `.resx`:
-
-- `Strings/Strings.resx`: inglés (idioma neutro / respaldo).
-- `Strings/Strings.es.resx`: español.
-
-La extensión usa el idioma de visualización de Windows; si no hay traducción para ese idioma, usa inglés. Las fechas y los números siguen el formato regional del usuario.
-
-**Agregar un idioma:**
-
-1. Copia `Strings/Strings.resx` a `Strings/Strings.<cultura>.resx` (por ejemplo `Strings.fr.resx` o `Strings.pt-BR.resx`) y traduce solo los `<value>`; no cambies los `name`.
-2. En `Package.appxmanifest`, dentro de `<Resources>`, declara el idioma: `<Resource Language="fr"/>`. Si la plantilla trae `x-generate`, reemplázalo por la lista explícita (`en-US`, `es`, `fr`…). Windows usa esta lista para decidir en qué idioma se ejecuta el proceso empaquetado; si falta, la extensión podría verse en inglés aunque la traducción exista.
-3. Vuelve a desplegar y recarga Command Palette.
-
-**Probar un idioma sin cambiar Windows:** define la variable de usuario `KENSAKU_LANG` (por ejemplo `es`), cierra sesión y vuelve a entrar (o reinicia PowerToys).
-
-**Textos nuevos:** agrega la clave en `Strings.resx` (inglés) y en cada traducción, y úsala con `Loc.Get("Clave")` o `Loc.Format("Clave", args)`. Si una clave falta en una traducción, se usa la inglesa; si falta en todas, se muestra el nombre de la clave.
-
 ## Cómo funciona
 
 - La extensión habla con `kensaku-cli serve` por HTTP (solo loopback, `127.0.0.1`, con token Bearer).
@@ -104,6 +85,25 @@ Para cada resultado:
 
 La primera búsqueda tarda más, porque se carga el índice (y se arranca el servidor si no estaba corriendo). Las siguientes son más rápidas.
 
+## Idiomas (i18n)
+
+El idioma por defecto de la interfaz es **inglés**. Los textos viven en archivos `.resx`:
+
+- `Strings/Strings.resx`: inglés (idioma neutro / respaldo).
+- `Strings/Strings.es.resx`: español.
+
+La extensión usa el idioma de visualización de Windows; si no hay traducción para ese idioma, usa inglés. Las fechas y los números siguen el formato regional del usuario.
+
+**Agregar un idioma:**
+
+1. Copia `Strings/Strings.resx` a `Strings/Strings.<cultura>.resx` (por ejemplo `Strings.fr.resx` o `Strings.pt-BR.resx`) y traduce solo los `<value>`; no cambies los `name`.
+2. En `Package.appxmanifest`, dentro de `<Resources>`, declara el idioma: `<Resource Language="fr"/>`. Si la plantilla trae `x-generate`, reemplázalo por la lista explícita (`en-US`, `es`, `fr`…). Windows usa esta lista para decidir en qué idioma se ejecuta el proceso empaquetado; si falta, la extensión podría verse en inglés aunque la traducción exista.
+3. Vuelve a desplegar y recarga Command Palette.
+
+**Probar un idioma sin cambiar Windows:** define la variable de usuario `KENSAKU_LANG` (por ejemplo `es`), cierra sesión y vuelve a entrar (o reinicia PowerToys).
+
+**Textos nuevos:** agrega la clave en `Strings.resx` (inglés) y en cada traducción, y úsala con `Loc.Get("Clave")` o `Loc.Format("Clave", args)`. Si una clave falta en una traducción, se usa la inglesa; si falta en todas, se muestra el nombre de la clave.
+
 ## Configuración
 
 Por ahora la configuración está en el código y en variables de entorno:
@@ -121,6 +121,7 @@ Si defines o cambias `KENSAKU_CLI`, cierra sesión y vuelve a entrar (o reinicia
 ## Solución de problemas
 
 - **La extensión no aparece:** confirma que desplegaste (no solo compilaste), que el modo desarrollador está activo y repite el Reload.
+- **La extensión aparece dos veces en Command Palette:** una fila es el comando de la extensión y la otra es el MSIX listado como app normal. `AppListEntry="none"` en `uap:VisualElements` (ya configurado) oculta esa entrada; vuelve a desplegar y ejecuta `Reload` tras cambiarlo.
 - **Aparece el item "No se pudo consultar Kensaku":** el subtítulo trae el motivo.
   - Si no encuentra `kensaku-cli`: el proceso empaquetado a veces no ve el mismo PATH que tu terminal. Obtén la ruta con `where.exe kensaku-cli` y defínela en `KENSAKU_CLI`.
   - Si `kensaku-cli serve` termina con código 3: no hay índice. Abre la app Kensaku una vez para crearlo.
@@ -185,6 +186,7 @@ gh run watch
 - El workflow necesita dos secretos del repositorio: `CERT_PFX_BASE64` (el `.pfx` codificado en Base64) y `CERT_PASSWORD` (su contraseña). Créalos con `gh secret set`.
 - El sujeto del certificado debe coincidir con `Publisher` en `KensakuCmdPal/Package.appxmanifest` (ahora `CN=rhurta`), o Windows no instalará el paquete.
 - El certificado público `kensaku.cer` está en la raíz del repo y se adjunta a cada release. La clave privada (`.pfx`) nunca debe subirse al repositorio.
+- El `kensaku.cer` de la raíz es el que hay que confiar; las copias en `rel/` (creadas por `gh release download`) son artefactos generados y están ignoradas por Git.
 - Los certificados autofirmados sirven para instalación manual desde GitHub. La distribución por Microsoft Store usa otra identidad y es la Store la que firma el paquete; las notas de `.github/skills/publish-extension/` de la plantilla describen las rutas de Store y WinGet.
 
 **Verificar una release**

@@ -121,6 +121,7 @@ If you set or change `KENSAKU_CLI`, sign out and back in (or restart PowerToys) 
 ## Troubleshooting
 
 - **The extension doesn't show up:** make sure you deployed (not just built), Developer Mode is on, and repeat the Reload.
+- **The extension appears twice in Command Palette:** one row is the extension command, the other is the MSIX listed as a normal app. `AppListEntry="none"` on `uap:VisualElements` (already set) hides the app entry; redeploy and run `Reload` after changing it.
 - **A "Could not query Kensaku" item appears:** its subtitle contains the reason.
   - If it can't find `kensaku-cli`: the packaged process sometimes doesn't see the same PATH as your terminal. Get the path with `where.exe kensaku-cli` and set it in `KENSAKU_CLI`.
   - If `kensaku-cli serve` exits with code 3: there is no index. Open the Kensaku app once to build it.
@@ -185,6 +186,7 @@ gh run watch
 - The workflow needs two repository secrets: `CERT_PFX_BASE64` (the `.pfx` encoded as Base64) and `CERT_PASSWORD` (its password). Create them with `gh secret set`.
 - The certificate subject must match `Publisher` in `KensakuCmdPal/Package.appxmanifest` (currently `CN=rhurta`), or Windows won't install the package.
 - The public certificate `kensaku.cer` is committed at the repo root and attached to each release. The private key (`.pfx`) must never be committed.
+- The root `kensaku.cer` is the one to trust; copies in `rel/` (created by `gh release download`) are generated artifacts and are gitignored.
 - Self-signed certificates are for sideloading from GitHub. Distribution through the Microsoft Store uses a different identity and the Store signs the package; the template's `.github/skills/publish-extension/` notes describe the Store and WinGet routes.
 
 **Checking a release**
