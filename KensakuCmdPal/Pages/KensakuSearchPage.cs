@@ -24,8 +24,8 @@ internal sealed partial class KensakuSearchPage : DynamicListPage
         Name = Loc.Get("PageName");
         PlaceholderText = Loc.Get("PagePlaceholder");
         ShowDetails = true;
-        //Icon = IconHelpers.FromRelativePath("Assets\\Kensaku.png");
-        Icon = new IconInfo("\uECA5"); // Tiles
+        Icon = IconHelpers.FromRelativePath("Assets\\Kensaku.png");
+        //Icon = new IconInfo("\uECA5"); // Tiles
     }
 
     public override IListItem[] GetItems() => _items;
